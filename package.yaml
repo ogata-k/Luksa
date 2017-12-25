@@ -21,12 +21,13 @@ description:         Please see the README on Github at <https://github.com/ogat
 
 dependencies:
 - base >= 4.7 && < 5
+- optparse-declarative
 
 library:
   source-dirs: src
 
 executables:
-  luksa-exe:
+  luksa:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
