@@ -3,11 +3,45 @@
 module LuksaCmds where
 
 import Options.Declarative
-
+import Control.Monad.IO.Class (liftIO)
+import System.Environment
+import System.FilePath.Windows  -- widows専用
+import System.Directory
 
 -- Luksaの設定ファイルなどの初期化用コマンド
 init :: Cmd "init for Luksa" ()
-init = undefined
+init = liftIO $ do
+    exeParent <- takeDirectory <$> getExecutablePath
+    putStr "Start making LuksaConfig directory for initialization of luksa in "
+    putStrLn exeParent
+
+    -- 以下でLuksaConfigファイルが存在するか否かで場合分けして処理をする
+    configPath <- return $ exeParent </> "LuksaConfig"
+    exePath <- return $ exeParent </> "luksa.exe"
+    existConfig <- doesDirectoryExist configPath
+    existExe <- doesFileExist exePath
+    if (existConfig || not existExe)
+    then
+        putStrLn "Could not initialize luksa because LuksaConfig might be existing. Probably, you had done the command 'luksa init'.\nIf you want to initialize luksa, you remove LuksaConfig directory."
+    else do
+        putStrLn "start initializing"
+        -- ここから初期化開始
+        putStrLn "make LuksaConfig"
+        createDirectory configPath
+        -- templatesディレクトリを作って中にdefaultテンプレートを作成
+        putStrLn "make templates"
+        createDirectory $ configPath </> "templates"
+        putStrLn "make default template"
+        defaultTempl <- return $ configPath </> "templates" </> "default"
+        createDirectory defaultTempl
+        createDirectory $ defaultTempl </> "document"
+        writeFile (defaultTempl </> "document" </> "main.lk") ""  -- 中身なし
+        -- TODO main.lkの中身を記入
+        createDirectory $ defaultTempl </> "helper"
+        createDirectory $ defaultTempl </> "impage"
+        writeFile (defaultTempl </> "project.yaml") ""
+        -- 中身はそのprojectの設定オプション
+        -- TODO project.yamlの中身を記入
 
 -- プロジェクトを作成するコマンド
 make :: Arg "NAME" String
