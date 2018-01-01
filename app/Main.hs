@@ -10,5 +10,5 @@ main = run_ $
     , subCmd "make" LC.make
     , subCmd "rename" LC.rename
     , subCmd "convert" LC.convert
-    , subCmd "makeTemplate" LC.makeTemplate
+    , subCmd "makeTemp" LC.makeTemp
     ]

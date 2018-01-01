@@ -1,6 +1,12 @@
 {-# LANGUAGE DataKinds #-}
 
-module LuksaCmds where
+module LuksaCmds
+(LuksaCmds.init
+, make
+, rename
+, convert
+, makeTemp
+) where
 
 import Options.Declarative
 import Control.Monad.IO.Class (liftIO)
@@ -35,19 +41,10 @@ init = liftIO $ do
         putStrLn "make templates"
         createDirectory $ configPath </> "templates"
         putStrLn "make default template"
-        defaultTempl <- return $ configPath </> "templates" </> "default"
-        createDirectory defaultTempl
-        createDirectory $ defaultTempl </> "document"
-        writeFile (defaultTempl </> "document" </> "main.lk") ""  -- 中身なし
-        -- TODO main.lkの中身を記入
-        createDirectory $ defaultTempl </> "helper"
-        createDirectory $ defaultTempl </> "impage"
-        writeFile (defaultTempl </> "project.yaml") ""
-        -- 中身はそのprojectの設定オプション
-        -- TODO project.yamlの中身を記入
-
-    putStrLn "success init"
-
+        defaultMakeFlg <- makeTemplate' "default" $ configPath </> "templates"
+        if defaultMakeFlg 
+            then putStrLn "success init"
+            else die "could not make template. false init."
 
 -- プロジェクトを作成するコマンド
 make :: Arg "NAME" String  -- プロジェクト
@@ -90,7 +87,37 @@ convert :: Cmd "convert luksa project to latex project" ()
 convert = undefined
 
 -- テンプレートの簡単な下書きを提供するコマンド
-makeTemplate :: Arg "NAME" String
+makeTemp :: Arg "NAME" String
     -> Cmd "make template for NAME template" ()
-makeTemplate = undefined
+makeTemp name = liftIO $ do
+    -- 排出先を取得(LuksaConfig/templates)
+    templatesPath <- fmap (</> "LuksaConfig" </> "templates") $ takeDirectory <$> getExecutablePath
+    templatesExistFlg <- doesDirectoryExist templatesPath
+    if templatesExistFlg
+        then putStrLn "find template directory"
+        else die "could not find template directory"
 
+    -- nameでデフォルトのようなテンプレートを作成
+    newTemplFlg <- makeTemplate' (get name) templatesPath
+    if newTemplFlg
+        then putStrLn "success make template of new template"
+        else die "could not make template of new template"
+
+-- 下の関数はエラー処理は行っていないに等しい
+makeTemplate' :: String -> FilePath -> IO Bool
+makeTemplate' name currentDir = do
+    templatePath <- return $ currentDir </> name
+    tempPathExistFlg <- doesDirectoryExist templatePath
+    if tempPathExistFlg
+        then return False
+        else do
+            createDirectory templatePath
+            createDirectory $ templatePath </> "document"
+            writeFile (templatePath </> "document" </> "main.lk") "" 
+            -- TODO main.lkの中身を記入
+            createDirectory $ templatePath </> "helper"
+            createDirectory $ templatePath </> "impage"
+            writeFile (templatePath </> "project.yaml") ""
+            -- 中身はそのprojectの設定オプション
+            -- TODO project.yamlの中身を記入
+            return True

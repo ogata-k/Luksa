@@ -6,7 +6,7 @@ luksaはgitやHaskell StackのようなCLIで、MarkDown風に書かれたプロ
 - make  [templateOption] <projectName>: プロジェクトを指定したテンプレートで今いるディレクトリ直下に作成する
 - rename <targetName>: 今いるプロジェクトの名前を指定した名前に変更する（作らないかも）
 - convert : 今いるプロジェクト内部にconvertedディレクトリを作り、LaTeXが変換可能なフォルダ群を吐き出す
-- maketemplate : テンプレートのテンプレートを作成（初期のdefaultテンプレートと同じにする）
+- makeTemp : テンプレートのテンプレートを作成（初期のdefaultテンプレートと同じにする）
 
 (削除するにはプロジェクトをディレクトリごと削除することにする)
 
