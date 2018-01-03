@@ -1,11 +1,18 @@
 module System.GetFilePath where
 
-import System.FilePath.Windows  --Windows専用
-import System.Environment
+--Windows専用
+import System.FilePath.Windows (takeDirectory
+                                , doesDirectoryExist
+                                )
+import System.Environment (getExecutablePath)
 
 -- 以下、Luksaの実行ファイルからファイルパスをを取得する関数
-getLuksaExeFile :: Maybe FilePath
-getLuksaExeFile = undefined
+getLuksaDir :: IO (Maybe FilePath)
+getLuksaDir = do
+    exePath <- getExecutablePath
+    dir <- takeDirectory exePath
+    existFlg <- doesDirectoryExist dir
+    if existFlg then return $ Just dir else return Nothing
 
 getLuksaConfigDir :: Maybe FilePath
 getLuksaConfigDir = undefined
