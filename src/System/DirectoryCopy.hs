@@ -1,4 +1,4 @@
-module DirectoryCopy (copyTree) where
+module System.DirectoryCopy (copyTree) where
 
 import System.Directory
 import System.Environment

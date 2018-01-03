@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 
-module LuksaCmds
-(LuksaCmds.init
+module Command.LuksaCmds
+(Command.LuksaCmds.init
 , make
 , rename
 , convert
@@ -14,7 +14,7 @@ import System.Environment
 import System.FilePath.Windows  -- widows専用
 import System.Directory
 import System.Exit (die)
-import DirectoryCopy (copyTree)
+import System.DirectoryCopy (copyTree)
 
 
 -- Luksaの設定ファイルなどの初期化用コマンド

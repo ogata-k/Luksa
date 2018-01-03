@@ -1,7 +1,7 @@
 module Main where
 
 import Options.Declarative(Group(..), subCmd, run_)
-import qualified LuksaCmds as LC
+import qualified Command.LuksaCmds as LC
 
 main :: IO ()
 main = run_ $
