@@ -4,6 +4,7 @@ module System.GetFilePath where
 import System.FilePath.Windows
 import System.Directory
 import System.Environment
+import Data.List (foldl')
 
 -- MaybeなFilePathから取得
 takeMaybeFilePath :: Maybe FilePath -> String
@@ -46,8 +47,45 @@ getTemplatesDir = getLuksaDirChildDir $ "LuksaConfig" </> "templates"
 getTemplateDir template = getLuksaDirChildDir $ "LuksaConfig" </> "templates" </> template
 
 -- 以下、プロジェクトに関するファイルパスを取得する関数
-getProjectDir :: Maybe FilePath
-getProjectDir = undefined
+-- 最低限プロジェクトの構成は満たしているプロジェクトを取得
+getProjectDir :: IO (Maybe FilePath)
+-- 現在のディレクトリを取得してその中にproject.yamlがなければ親でもう一度探す。あればdocument,main.lk,helper,imageがあるかを確認。それが通ればそのディレクトリがプロジェクトとする。
+getProjectDir = do
+    current <- getCurrentDirectory
+    home <- getHomeDir
+    getProjectDir' home current
+    
+    where
+    -- ルートディレクトリを取得
+    getHomeDir :: IO FilePath
+    getHomeDir = do
+        here <- getCurrentDirectory
+        let home = fst $ splitDrive here
+        return home
+
+    -- ルートディレクトリになるまで探し続ける
+    getProjectDir' :: FilePath -> FilePath -> IO (Maybe FilePath)
+    getProjectDir' home currentDir = do
+        putStrLn $ "search directory : " ++ currentDir
+        -- Luksaのプロジェクト作成コマンド的にプロジェクトの親ディレクトリはホームディレクトリにならないのでホームになったら打ち切り
+        if currentDir == home
+            then return Nothing
+            else do
+                existFlg <- isProject currentDir
+                if existFlg
+                    then do
+                        putStrLn $ "find : " ++ currentDir
+                        return $ Just currentDir
+                    else do
+                        let parent = takeDirectory currentDir
+                        getProjectDir' home parent
+
+    isProject :: FilePath -> IO Bool
+    isProject target = do  -- targetは絶対パス
+        children <- listDirectory target
+        let existFlg = foldl'(&&) True $ map (\f -> f children) $ map elem ["project.yaml", "document", "helper", "image"] -- ここは用編集
+        mainFileExist <- doesFileExist $ target </> "document" </> "main.lk"
+        return $ if existFlg && mainFileExist then True else False
 
 getDocumentDir :: Maybe FilePath
 getDocumentDir = undefined
