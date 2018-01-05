@@ -116,7 +116,7 @@ makeTemplate' name currentDir = do
             writeFile (templatePath </> "document" </> "main.lk") "" 
             -- TODO main.lkの中身を記入
             createDirectory $ templatePath </> "helper"
-            createDirectory $ templatePath </> "impage"
+            createDirectory $ templatePath </> "image"
             writeFile (templatePath </> "project.yaml") ""
             -- 中身はそのprojectの設定オプション
             -- TODO project.yamlの中身を記入
