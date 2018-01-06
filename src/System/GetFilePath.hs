@@ -19,7 +19,6 @@ getChildDir, getChildFile :: IO (Maybe FilePath)
 getChildDir getParent targetDir = do
     dir <- getParent
     let filePath = do fmap (</> targetDir) dir
-    putStrLn $ "search : " ++ takeMaybeFilePath filePath
     existFlag <- case filePath of
                     Just path -> doesDirectoryExist path
                     Nothing -> return False
@@ -34,7 +33,6 @@ getChildDir getParent targetDir = do
 getChildFile getParent targetFile = do
     dir <- getParent
     let filePath = do fmap (</> targetFile) dir
-    putStrLn $ "search : " ++ takeMaybeFilePath filePath
     existFlag <- case filePath of
                     Just path -> doesFileExist path
                     Nothing -> return False
@@ -91,7 +89,6 @@ getProjectDir = do
     -- ルートディレクトリになるまで探し続ける
     getProjectDir' :: FilePath -> FilePath -> IO (Maybe FilePath)
     getProjectDir' home currentDir = do
-        putStrLn $ "search directory : " ++ currentDir
         -- Luksaのプロジェクト作成コマンド的にプロジェクトの親ディレクトリはホームディレクトリにならないのでホームになったら打ち切り
         if currentDir == home
             then do
