@@ -15,36 +15,43 @@ import System.FilePath.Windows  -- widows専用
 import System.Directory
 import System.Exit (die)
 import System.DirectoryCopy (copyTree)
+import System.GetFilePath
 
 
 -- Luksaの設定ファイルなどの初期化用コマンド
 init :: Cmd "init for Luksa" ()
 init = liftIO $ do
-    exeParent <- takeDirectory <$> getExecutablePath
     putStr "Start making LuksaConfig directory for initialization of luksa in "
+    parent <- getLuksaDir
+    case parent of
+        Nothing -> do putStrLn "can not find directory which has exe file"
+                      die "fail init"
+    let exeParent = takeMaybeFilePath parent
     putStrLn exeParent
 
     -- 以下でLuksaConfigファイルが存在するか否かで場合分けして処理をする
-    configPath <- return $ exeParent </> "LuksaConfig"
-    exePath <- return $ exeParent </> "luksa.exe"
-    existConfig <- doesDirectoryExist configPath
+    let configPath = exeParent </> "LuksaConfig"
+    let exePath = exeParent </> "luksa.exe"
+    existConfigFlg <- doesDirectoryExist configPath
     existExe <- doesFileExist exePath
-    if (existConfig || not existExe)
-    then
-        putStrLn "Could not initialize luksa because LuksaConfig might be existing. Probably, you had done the command 'luksa init'.\nIf you want to initialize luksa, you remove LuksaConfig directory."
-    else do
-        putStrLn "start initializing"
-        -- ここから初期化開始
-        putStrLn "make LuksaConfig"
-        createDirectory configPath
-        -- templatesディレクトリを作って中にdefaultテンプレートを作成
-        putStrLn "make templates"
-        createDirectory $ configPath </> "templates"
-        putStrLn "make default template"
-        defaultMakeFlg <- makeTemplate' "default" $ configPath </> "templates"
-        if defaultMakeFlg 
-            then putStrLn "success init"
-            else die "could not make template. false init."
+    if existConfig
+        then do
+            putStrLn "Could not initialize luksa because of existing LuksaConfig . Probably, you had done the command 'luksa init'.\nIf you want to initialize luksa, you remove LuksaConfig directory."
+            die "fail init"
+        else do
+            -- ここから初期化開始
+            putStrLn "make LuksaConfig"
+            createDirectory configPath
+            -- templatesディレクトリを作って中にdefaultテンプレートを作成
+            putStrLn "make templates"
+            createDirectory $ configPath </> "templates"
+            -- 以下のテンプレートの作成を一般化して関数化
+            putStrLn "make default template"
+            -- 下のコマンドをmakeDefaultTemplate関数で置き換える
+            defaultMakeFlg <- makeTemplate' "default" $ configPath </> "templates"
+            if defaultMakeFlg 
+                then putStrLn "success init"
+                else die "could not make template. false init."
 
 -- プロジェクトを作成するコマンド
 make :: Arg "NAME" String  -- プロジェクト
@@ -104,6 +111,7 @@ makeTemp name = liftIO $ do
         else die "could not make template of new template"
 
 -- 下の関数はエラー処理は行っていないに等しい
+-- 下の関数を最低限のプロジェクト作成用にしてからそれぞれ用のテンプレート作成コマンドを作成する
 makeTemplate' :: String -> FilePath -> IO Bool
 makeTemplate' name currentDir = do
     templatePath <- return $ currentDir </> name
