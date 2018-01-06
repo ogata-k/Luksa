@@ -16,16 +16,17 @@ import System.Directory
 import System.Exit (die)
 import System.DirectoryCopy (copyTree)
 import System.GetFilePath
-
+import System.Template
+import Control.Monad (when)
 
 -- Luksaの設定ファイルなどの初期化用コマンド
 init :: Cmd "init for Luksa" ()
 init = liftIO $ do
     putStr "Start making LuksaConfig directory for initialization of luksa in "
     parent <- getLuksaDir
-    case parent of
-        Nothing -> do putStrLn "can not find directory which has exe file"
-                      die "fail init"
+    when (parent == Nothing) $ do
+        putStrLn "can not find directory which has exe file"
+        die "fail init"
     let exeParent = takeMaybeFilePath parent
     putStrLn exeParent
 
@@ -34,7 +35,7 @@ init = liftIO $ do
     let exePath = exeParent </> "luksa.exe"
     existConfigFlg <- doesDirectoryExist configPath
     existExe <- doesFileExist exePath
-    if existConfig
+    if existConfigFlg
         then do
             putStrLn "Could not initialize luksa because of existing LuksaConfig . Probably, you had done the command 'luksa init'.\nIf you want to initialize luksa, you remove LuksaConfig directory."
             die "fail init"
@@ -45,10 +46,8 @@ init = liftIO $ do
             -- templatesディレクトリを作って中にdefaultテンプレートを作成
             putStrLn "make templates"
             createDirectory $ configPath </> "templates"
-            -- 以下のテンプレートの作成を一般化して関数化
             putStrLn "make default template"
-            -- 下のコマンドをmakeDefaultTemplate関数で置き換える
-            defaultMakeFlg <- makeTemplate' "default" $ configPath </> "templates"
+            defaultMakeFlg <- makeDefaultTemplate
             if defaultMakeFlg 
                 then putStrLn "success init"
                 else die "could not make template. false init."
@@ -98,34 +97,15 @@ makeTemp :: Arg "NAME" String
     -> Cmd "make template for NAME template" ()
 makeTemp name = liftIO $ do
     -- 排出先を取得(LuksaConfig/templates)
-    templatesPath <- fmap (</> "LuksaConfig" </> "templates") $ takeDirectory <$> getExecutablePath
-    templatesExistFlg <- doesDirectoryExist templatesPath
-    if templatesExistFlg
-        then putStrLn "find template directory"
-        else die "could not find template directory"
+    templatesMPath <- getTemplatesDir
+    case templatesMPath of
+        Nothing -> do
+            putStrLn "can not find templates directory"
+            die "fail make template"
+        Just templatesPath -> do
+            -- nameで最低限のテンプレート用テンプレートを作成
+            newTemplFlg <- makeMinimumTemplate templatesPath (get name)
+            if newTemplFlg
+                then putStrLn "success make template of new template"
+                else die "could not make template of new template"
 
-    -- nameでデフォルトのようなテンプレートを作成
-    newTemplFlg <- makeTemplate' (get name) templatesPath
-    if newTemplFlg
-        then putStrLn "success make template of new template"
-        else die "could not make template of new template"
-
--- 下の関数はエラー処理は行っていないに等しい
--- 下の関数を最低限のプロジェクト作成用にしてからそれぞれ用のテンプレート作成コマンドを作成する
-makeTemplate' :: String -> FilePath -> IO Bool
-makeTemplate' name currentDir = do
-    templatePath <- return $ currentDir </> name
-    tempPathExistFlg <- doesDirectoryExist templatePath
-    if tempPathExistFlg
-        then return False
-        else do
-            createDirectory templatePath
-            createDirectory $ templatePath </> "document"
-            writeFile (templatePath </> "document" </> "main.lk") "" 
-            -- TODO main.lkの中身を記入
-            createDirectory $ templatePath </> "helper"
-            createDirectory $ templatePath </> "image"
-            writeFile (templatePath </> "project.yaml") ""
-            -- 中身はそのprojectの設定オプション
-            -- TODO project.yamlの中身を記入
-            return True

@@ -4,7 +4,8 @@ module System.Template where
 import System.FilePath.Windows
 import System.Directory
 import System.Environment
-import System.getFilePath
+import System.GetFilePath
+import System.DirectoryCopy
 
 -- TODO 最小のテンプレートを作成する
 makeMinimumTemplate :: FilePath -> String -> IO Bool
@@ -12,6 +13,7 @@ makeMinimumTemplate targetDir name  = do
     targetIsExistDir <- doesDirectoryExist targetDir
     let templatePath = targetDir </> name
     tempPathExistFlg <- doesPathExist templatePath
+    putStrLn $ "make " ++ name ++ "Template in " ++ targetDir
     if targetIsExistDir && not tempPathExistFlg
         then do
             createDirectory templatePath
@@ -27,17 +29,17 @@ makeMinimumTemplate targetDir name  = do
         else return False
 
 
--- TODO defaultテンプレートを作成
-makeDefaultTemplate :: FilePath -> IO Bool
+-- TODO defaultテンプレートをtemplates直下に作成
+makeDefaultTemplate :: IO Bool
 makeDefaultTemplate = do
-    temlatesDir <- getLuksaTemplatesDir
+    templatesDir <- getTemplatesDir
     case templatesDir of
         Nothing -> return False
         Just tsDir -> do
-            makeMinimumTemplateDir tsDir "default"
+            makeMinimumTemplate tsDir "default"
             tempMDir <- getTemplateDir "default"
             let tempDir = takeMaybeFilePath tempMDir
-            -- 必要な事項を書き込む
+            -- TODO 必要な事項を書き込む
             return True
 
 -- TODO テンプレートを指定のディレクトリにコピーする
