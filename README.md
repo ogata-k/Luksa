@@ -1,4 +1,4 @@
-# luksa
+# luksa （まだほとんど何もできてない）
 luksaはgitやHaskell StackのようなCLIで、MarkDown風に書かれたプロジェクトをコマンドで作成して、LaTeXでコンパイルできるファイル群に変換するプログラムです。
 
 # luksaで扱えるコマンド(よくわからないならluksaと単に実行してみてください)
